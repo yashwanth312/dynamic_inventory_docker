@@ -1,0 +1,38 @@
+- hosts: localhost
+  vars_prompt:
+          - name: cont_name
+            prompt: Enter the name of the container
+            private: no
+  tasks:
+    - name: Creating docker container
+      docker_container:
+              name: "{{ cont_name }}" 
+              image: yashwanth3/ssh
+              privileged: yes
+              ports:
+              - 456:80
+      register: x
+    - name: Printing the return value
+      debug: 
+        var: x.ansible_facts.docker_container.NetworkSettings["IPAddress"]
+    - name: Updating inventory
+      template:
+        src: /root/ssh/inventory
+        dest: /root/ssh/inventory
+    - name: Waiting for services to start
+      command: "sleep 2"
+
+- hosts: containers 
+  tasks: 
+  - name: Installing httpd webserver
+    package:
+      name: "httpd"
+      state: present
+  - name: Starting httpd services
+    service:
+      name: "httpd"
+      state: started
+  - name: Copying content
+    copy:
+      content: "Hello from Ansible"
+      dest: /var/www/html/index.html
